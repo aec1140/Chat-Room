@@ -165,22 +165,6 @@
       nameForm.addEventListener('submit', addUser);
     };
 
-    const checkForUrl = (msg) => {
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      const src = urlRegex.exec(msg);
-      let str = msg;
-      
-      if (src) {
-        str = msg.replace(urlRegex, function(url) {
-          return '<a href="' + url + '">' + url + '</a>'; 
-        });
-        
-        if (isValid(src[0])) str += `<br><iframe src="${src[0]}"></iframe>`;
-      }
-      
-      return str;
-    };
-
     window.onload = init;
 
   </script>

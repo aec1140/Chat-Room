@@ -113,8 +113,48 @@ const addUser = (request, response, body) => {
 
   //add or update fields for this user name
   messages[body.timeStamp].name = body.name;
-  messages[body.timeStamp].msg = body.msg;
+  
+  // check message for url
+  const url = getUrl(body.msg);
+  // add links if a url is in the message
+  const message = url ? addLink(body.msg, url) : body.msg;
+  
+  messages[body.timeStamp].msg = message;
 
+  
+};
+
+const getUrl = (msg) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const src = urlRegex.exec(msg);
+  return src[0];
+};
+
+const addLink = (msg, url) => {
+  return msg.replace(url, '<a href="' + url + '">' + url + '</a>');
+};
+
+const addIframe = () => {
+  
+};
+
+// http://stackoverflow.com/questions/26007187/node-js-check-if-a-remote-url-exists
+const checkUrlExists = (src, callback) {
+  const http = require('http');
+  const url = require('url');
+  
+  const options = {
+    method: 'HEAD',
+    host: url.parse(src).host,
+    port: 80,
+    path: url.parse(src).pathname,
+  };
+  
+  const req = http.request(options, function(res))
+  
+};
+
+const responseCreated = () => {
   //if response is created, then set our created message
   //and sent response with a message
   if (responseCode === 201) {
