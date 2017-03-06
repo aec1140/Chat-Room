@@ -175,19 +175,10 @@
           return '<a href="' + url + '">' + url + '</a>'; 
         });
         
-        if (isValid(src)) str += `<br><iframe src="${src}"></iframe>`;
+        if (isValid(src[0])) str += `<br><iframe src="${src[0]}"></iframe>`;
       }
       
       return str;
-    };
-
-    const isValid = (url) => {      
-      //create a new AJAX request (synchronous)
-      const xhr = new XMLHttpRequest();
-      xhr.open('HEAD', url, false);      
-      xhr.send();
-      
-      return xhr.status == 200;
     };
 
     window.onload = init;
