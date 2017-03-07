@@ -1,8 +1,8 @@
 const http = require('http'); //pull in http module
-//url module for parsing url string
+const socket = require('socket.io');
 const url = require('url'); 
-//querystring module for parsing querystrings from url
 const query = require('querystring');
+
 //pull in our custom files
 const htmlHandler = require('./htmlResponses.js');
 const jsonHandler = require('./jsonResponses.js');
@@ -89,6 +89,22 @@ const onRequest = (request, response) => {
   }
 };
 
-http.createServer(onRequest).listen(port);
+const httpServer = http.createServer(onRequest);
+httpServer.listen(port);
+
+const io = new socket(); // http://stackoverflow.com/questions/17285180/use-both-http-and-https-for-socket-io
+io.attach(httpServer);
+
+const newConnection = (socket) => {
+  console.log(`New Connection: ${socket.id}`);
+  
+  const sendMessage = (msg) => {
+    io.sockets.emit('msg', msg);
+  };
+  
+  socket.on('msg', sendMessage);
+};
+
+io.sockets.on('connection', newConnection);
 
 console.log(`Listening on 127.0.0.1: ${port}`);

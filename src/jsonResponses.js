@@ -89,10 +89,9 @@ const notFoundMeta = (request, response) => {
 const addUser = (request, response, body) => {
   //default json message
   const responseJSON = {
-    message: 'Name and message are both required.',
+    name: '',
+    msg: 'Name and message are both required.',
   };
-  
-  console.log(body);
 
   if (!body.name || !body.msg) {
     responseJSON.id = 'missingParams';
@@ -120,41 +119,7 @@ const addUser = (request, response, body) => {
   const message = url ? addLink(body.msg, url) : body.msg;
   
   messages[body.timeStamp].msg = message;
-
   
-};
-
-const getUrl = (msg) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const src = urlRegex.exec(msg);
-  return src[0];
-};
-
-const addLink = (msg, url) => {
-  return msg.replace(url, '<a href="' + url + '">' + url + '</a>');
-};
-
-const addIframe = () => {
-  
-};
-
-// http://stackoverflow.com/questions/26007187/node-js-check-if-a-remote-url-exists
-const checkUrlExists = (src, callback) {
-  const http = require('http');
-  const url = require('url');
-  
-  const options = {
-    method: 'HEAD',
-    host: url.parse(src).host,
-    port: 80,
-    path: url.parse(src).pathname,
-  };
-  
-  const req = http.request(options, function(res))
-  
-};
-
-const responseCreated = () => {
   //if response is created, then set our created message
   //and sent response with a message
   if (responseCode === 201) {
@@ -163,8 +128,9 @@ const responseCreated = () => {
     
     //recalculating the hash digest for etag
     digest = etag.digest('hex')
-    
-    responseJSON.message = 'Created Successfully';
+
+    responseJSON.name = messages[body.timeStamp].name;
+    responseJSON.msg = messages[body.timeStamp].msg;
     return respondJSON(request, response, responseCode, responseJSON);
   }
   // 204 has an empty payload, just a success
@@ -172,6 +138,18 @@ const responseCreated = () => {
   // 204 will not alter the browser in any way!!!
   return respondJSONMeta(request, response, responseCode);
 };
+
+const getUrl = (msg) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const src = urlRegex.exec(msg);
+  return src ? src[0] : null;
+};
+
+const addLink = (msg, url) => {
+  return msg.replace(url, '<a href="' + url + '">' + url + '</a>');
+};
+
+// http://stackoverflow.com/questions/26007187/node-js-check-if-a-remote-url-exists
 
 module.exports = {
   addUser,
