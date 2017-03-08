@@ -1,27 +1,25 @@
 {
-  "name": "http-api-assignment-ii",
+  "name": "chat-room",
   "version": "1.0.0",
-  "description": "HTTP API Assignment II",
+  "description": "API Project IGME 430",
   "main": "./src/server.js",
   "scripts": {
-    "start": "node ./src/server.js",
-    "pretest": "eslint ./src --fix",
-    "test": "echo \"Tests Complete\""
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aec1140/http-api-assignment-ii.git"
+    "url": "git+https://github.com/aec1140/Chat-Room.git"
   },
   "author": "Alex Cook",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/aec1140/http-api-assignment-ii/issues"
+    "url": "https://github.com/aec1140/Chat-Room/issues"
   },
-  "homepage": "https://github.com/aec1140/http-api-assignment-ii#readme",
+  "homepage": "https://github.com/aec1140/Chat-Room#readme",
   "devDependencies": {
-    "eslint": "^3.16.0",
+    "eslint": "^3.17.1",
     "eslint-config-airbnb": "^14.1.0",
     "eslint-plugin-import": "^2.2.0",
     "socket.io": "^1.7.3"
-  },
+  }
 }
