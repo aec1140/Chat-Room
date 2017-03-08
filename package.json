@@ -4,7 +4,9 @@
   "description": "API Project IGME 430",
   "main": "./src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./src/server.js",
+    "pretest": "eslint ./src --fix",
+    "test": "echo \"Tests Complete\""
   },
   "repository": {
     "type": "git",
