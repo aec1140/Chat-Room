@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+  
   <title>Our simple HTTP server</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/babel">
     
     let socket;
+    let user;
 
     //function to parse our response
     const parseJSON = (xhr, content) => {
@@ -41,7 +44,7 @@
     const handleResponse = (xhr, parseResponse) => {
       const content = document.querySelector('#content');
       
-      //depending on which headers are used
+/*      //depending on which headers are used
       //The browser will either re-fire a 200 or will show a 304.
       switch(xhr.status) {
         case 200: //if success
@@ -68,7 +71,7 @@
         default: //any other status
           content.innerHTML = `Error code not implemented by client.`;
           break;
-      }
+      }*/
       
       //if we are expecting a response body (not in a 304 or head request)
       if(parseResponse) {
@@ -78,20 +81,19 @@
     };
 
     //function to send our post request
-    const sendPost = (e, nameForm, userForm) => {
+    const sendPost = (e, chatForm, userForm) => {
       //grab the forms action (url to go to)
       //and method (HTTP method - POST in this case)
-      const nameAction = nameForm.getAttribute('action');
-      const nameMethod = nameForm.getAttribute('method');
+      const chatAction = chatForm.getAttribute('action');
+      const chatMethod = chatForm.getAttribute('method');
       
       //grab the form's name and age fields so we can check user input
-      const nameField = nameForm.querySelector('#nameField');
-      const msgField = nameForm.querySelector('#msgField');
+      const msgField = chatForm.querySelector('#msgField');
       
       //create a new Ajax request (remember this is asynchronous)
       const xhr = new XMLHttpRequest();
       //set the method (POST) and url (action field from form)
-      xhr.open(nameMethod, nameAction);
+      xhr.open(chatMethod, chatAction);
       
       //set our request type to x-www-form-urlencoded
       //which is one of the common types of form data. 
@@ -106,7 +108,7 @@
       // get time of data being sent
       
       
-      const formData = `timeStamp=${getTime()}&name=${nameField.value}&msg=${msgField.value}`;
+      const formData = `timeStamp=${getTime()}&name=${user.value}&msg=${msgField.value}`;
       
       //send our request with the data
       xhr.send(formData);
@@ -156,16 +158,34 @@
       xhr.send();
     };
 
+    const createUser = (e, nameForm) => {
+      // TODO Need to check to make sure user name is valid and it was added correctly
+      user = nameForm.querySelector('#nameField'); 
+      console.log(`User: ${user.value} has joined the chat`);
+      
+      // Hide login div and display chat room
+      document.querySelector('#loginPage').style = "display:none";
+      document.querySelector('#chatPage').style = "display:inline";
+      
+      //prevent the browser's default action (to send the form on its own)
+      e.preventDefault();
+      //return false to prevent the browser from trying to change page
+      return false;
+    };
+
     const init = () => {   
       //grab form
       const nameForm = document.querySelector('#nameForm');
+      const chatForm = document.querySelector('#chatForm');
       const userForm = document.querySelector('#userForm');
       
       //create handlers
-      const addUser = (e) => sendPost(e, nameForm, userForm);
+      const addUser = (e) => createUser(e, nameForm);      
+      const addMsg = (e) => sendPost(e, chatForm, userForm);
       
       //attach submit event (for clicking submit or hitting enter)
       nameForm.addEventListener('submit', addUser);
+      chatForm.addEventListener('submit', addMsg);
       requestUpdate(userForm);
       
       socket = io();
@@ -175,6 +195,7 @@
         const chat = document.createElement('p');
         chat.innerHTML = `<b>${obj.name}:</b> ${obj.msg}`;
         content.appendChild(chat);
+        content.scrollTop = content.scrollHeight;
       });
     };
 
@@ -183,28 +204,35 @@
   </script>
 </head>
 <body>
-  <section id="content">
-  </section>
-  <section id="top">
-    <h3>POST Status Code Tests</h3>
-    <form id="nameForm" action="/addUser" method="post">
-      <label for="name">Name: </label>
-      <input id="nameField" type="text" name="name" />
-      <label for="msg">Message: </label>
-      <input id="msgField" type="text" name="message"/>
+  <div id="loginPage">
+    <form id="nameForm">
+      <label for="userName">Username: </label>
+      <input id="nameField" type="text" userName="userName" />
       <input type="submit" value="Add User" />
     </form>
-    <form id="userForm" action="/getUsers" method="get">
-      <select id='urlField'>
-        <option value='/getUsers'>/getUsers</option>
-        <option value='/notReal'>/notReal</option>
-      </select>
-      <select id="methodSelect">
-        <option value="get">GET</option>
-        <option value="head">HEAD</option>
-      </select>
-      <input type="submit" value="Get User" />
-    </form>
-  </section>
+  </div>
+  <div id="chatPage" style="display:none">
+    <div id="content">
+    </div>
+    <div id="top">
+      <h3>POST Status Code Tests</h3>
+      <form id="chatForm" action="/addUser" method="post">
+        <label for="msg">Message: </label>
+        <input id="msgField" type="text" name="message"/>
+        <input type="submit" value="Add User" />
+      </form>
+      <form id="userForm" action="/getUsers" method="get">
+        <select id='urlField'>
+          <option value='/getUsers'>/getUsers</option>
+          <option value='/notReal'>/notReal</option>
+        </select>
+        <select id="methodSelect">
+          <option value="get">GET</option>
+          <option value="head">HEAD</option>
+        </select>
+        <input type="submit" value="Get User" />
+      </form>
+    </div>
+  </div>
 </body>
 </html>
