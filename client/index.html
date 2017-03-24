@@ -3,30 +3,30 @@
 <head>
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
   <meta content="utf-8" http-equiv="encoding">
-  
+
   <title>Our simple HTTP server</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/babel">
-    
+
     let socket;
     let user;
 
     //function to parse our response
     const parseJSON = (xhr, content) => {
       console.dir(xhr);
-      
+
       //parse response (obj will be empty in a 204 updated)
       const obj = JSON.parse(xhr.response);
-      
+
       //if message in response, add to screen
       if(obj.message) {
         const p = document.createElement('p');
         p.textContent = `Message: ${obj.message}`;
         content.appendChild(p);
       }
-      
+
       //if messages in response, add to screen
       if(obj.messages) {
         // Build string from data
@@ -43,7 +43,7 @@
 
     const handleResponse = (xhr, parseResponse) => {
       const content = document.querySelector('#content');
-      
+
 /*      //depending on which headers are used
       //The browser will either re-fire a 200 or will show a 304.
       switch(xhr.status) {
@@ -72,7 +72,7 @@
           content.innerHTML = `Error code not implemented by client.`;
           break;
       }*/
-      
+
       //if we are expecting a response body (not in a 304 or head request)
       if(parseResponse) {
         //parse the object and print it
@@ -86,33 +86,33 @@
       //and method (HTTP method - POST in this case)
       const chatAction = chatForm.getAttribute('action');
       const chatMethod = chatForm.getAttribute('method');
-      
+
       //grab the form's name and age fields so we can check user input
       const msgField = chatForm.querySelector('#msgField');
-      
+
       //create a new Ajax request (remember this is asynchronous)
       const xhr = new XMLHttpRequest();
       //set the method (POST) and url (action field from form)
       xhr.open(chatMethod, chatAction);
-      
+
       //set our request type to x-www-form-urlencoded
-      //which is one of the common types of form data. 
+      //which is one of the common types of form data.
       //This type has the same format as query strings key=value&key2=value2
       xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
       //set our requested response type in hopes of a JSON response
       xhr.setRequestHeader ('Accept', 'application/json');
-      
+
       //set our function to handle the response
       xhr.onload = () => emitMessage(xhr, true);
-      
+
       // get time of data being sent
-      
-      
+
+
       const formData = `timeStamp=${getTime()}&name=${user.value}&msg=${msgField.value}`;
-      
+
       //send our request with the data
       xhr.send(formData);
-    
+
       //prevent the browser's default action (to send the form on its own)
       e.preventDefault();
       //return false to prevent the browser from trying to change page
@@ -121,7 +121,7 @@
 
     const emitMessage = (xhr, parseResponse) => {
       const obj = JSON.parse(xhr.response);
-      
+
       socket.emit('msg', obj);
     };
 
@@ -132,66 +132,66 @@
       const h = today.getHours();
       const m = today.getMinutes();
       const s = today.getSeconds();
-      
+
       let timeString = h>12 ? h-12 : h;
       timeString += `:${m}:${s}`;
-      
+
       return timeString;
     };
 
     //function to send request
     const requestUpdate = (userForm) => {
-      //grab url field 
+      //grab url field
       const url = userForm.querySelector('#urlField').value;
-      
+
       //create a new AJAX request (asynchronous)
       const xhr = new XMLHttpRequest();
       //setup connect using the selected method and url
       xhr.open('GET', url);
-      
+
       xhr.setRequestHeader('Accept', 'application/json');
 
       //set onload to parse request and get json message
       xhr.onload = () => handleResponse(xhr, true);
-      
+
       //send ajax request
       xhr.send();
     };
 
     const createUser = (e, nameForm) => {
       // TODO Need to check to make sure user name is valid and it was added correctly
-      user = nameForm.querySelector('#nameField'); 
+      user = nameForm.querySelector('#nameField');
       console.log(`User: ${user.value} has joined the chat`);
-      
+
       // Hide login div and display chat room
       document.querySelector('#loginPage').style = "display:none";
       document.querySelector('#chatPage').style = "display:inline";
-      
+
       //prevent the browser's default action (to send the form on its own)
       e.preventDefault();
       //return false to prevent the browser from trying to change page
       return false;
     };
 
-    const init = () => {   
+    const init = () => {
       //grab form
       const nameForm = document.querySelector('#nameForm');
       const chatForm = document.querySelector('#chatForm');
       const userForm = document.querySelector('#userForm');
-      
+
       //create handlers
-      const addUser = (e) => createUser(e, nameForm);      
+      const addUser = (e) => createUser(e, nameForm);
       const addMsg = (e) => sendPost(e, chatForm, userForm);
-      
+
       //attach submit event (for clicking submit or hitting enter)
       nameForm.addEventListener('submit', addUser);
       chatForm.addEventListener('submit', addMsg);
       requestUpdate(userForm);
-      
+
       socket = io();
       socket.on('msg', function(obj){
         const content = document.querySelector('#content');
-        
+
         const chat = document.createElement('p');
         chat.innerHTML = `<b>${obj.name}:</b> ${obj.msg}`;
         content.appendChild(chat);
@@ -206,16 +206,17 @@
 <body>
   <div id="loginPage">
     <form id="nameForm">
-      <label for="userName">Username: </label>
-      <input id="nameField" type="text" userName="userName" />
-      <input type="submit" value="Add User" />
+      <input id="nameField" type="text" userName="userName" placeholder="Username" />
     </form>
   </div>
   <div id="chatPage" style="display:none">
+    <div class="tab">
+      <button class="chatRoom">General</button>
+      <button class="chatRoom">+</button>
+    </div>
     <div id="content">
     </div>
-    <div id="top">
-      <h3>POST Status Code Tests</h3>
+    <div id="input">
       <form id="chatForm" action="/addUser" method="post">
         <label for="msg">Message: </label>
         <input id="msgField" type="text" name="message"/>
