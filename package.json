@@ -24,6 +24,7 @@
     "eslint-plugin-import": "^2.2.0"
   },
   "dependencies": {
-    "socket.io": "^1.7.3"
+    "socket.io": "^1.7.3",
+    "xmlhttprequest": "^1.8.0"
   }
 }

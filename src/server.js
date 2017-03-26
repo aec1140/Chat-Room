@@ -7,12 +7,12 @@ const query = require('querystring');
 const htmlHandler = require('./htmlResponses.js');
 const jsonHandler = require('./jsonResponses.js');
 
-const port = process.env.PORT || process.env.NODE_PORT || 3000;
+const port = process.env.PORT || process.env.NODE_PORT || 3010;
 
 // handle POST requests
 const handlePost = (request, response, parsedUrl) => {
   // if post is to /addUser (our only POST url)
-  if (parsedUrl.pathname === '/addUser') {
+  if (parsedUrl.pathname === '/addMsg') {
     const res = response;
 
     // uploads come in as a byte stream that we need
@@ -41,10 +41,23 @@ const handlePost = (request, response, parsedUrl) => {
       // since we are getting x-www-form-urlencoded data
       // the format will be the same as querystrings
       // Parse the string into an object by field name
-      const bodyParams = query.parse(bodyString);
+      const bodyParsed = query.parse(bodyString);
+
+      // Check for URL's
+      const msgUrl = jsonHandler.getUrl(bodyParsed.msg);
+
+      if (msgUrl) {
+        // emit url to check to change
+        jsonHandler.urlIsValid(msgUrl);
+      }
+
+      // add links if a url is in the message
+      if (bodyParsed.msg && msgUrl) {
+        bodyParsed.msg = jsonHandler.addLink(bodyParsed.msg, msgUrl);
+      }
 
       // pass to our addUser function
-      jsonHandler.addUser(request, res, bodyParams);
+      jsonHandler.addMsg(request, res, bodyParsed);
     });
   }
 };
@@ -52,7 +65,7 @@ const handlePost = (request, response, parsedUrl) => {
 const onRequest = (request, response) => {
   // parse url into individual parts
   // returns an object of url parts by name
-  const parsedUrl = url.parse(request.url);
+  const parsedUrl = url.parse(request.url, true);
 
   // check the request method (get, head, post, etc)
   switch (request.method) {
@@ -66,9 +79,10 @@ const onRequest = (request, response) => {
       } else if (parsedUrl.pathname === '/style.css') {
         // if stylesheet, send stylesheet
         htmlHandler.getCSS(request, response);
-      } else if (parsedUrl.pathname === '/getUsers') {
+      } else if (parsedUrl.pathname === '/getMessages') {
+        const params = parsedUrl.query;
         // if get users, send user object back
-        jsonHandler.getUsers(request, response);
+        jsonHandler.getMessages(request, response, params);
       } else {
         // if not found, send 404 message
         jsonHandler.notFound(request, response);
@@ -99,6 +113,7 @@ const newConnection = (socket) => {
   console.log(`New Connection: ${socket.id}`);
 
   const sendMessage = (msg) => {
+    console.log(msg);
     io.sockets.emit('msg', msg);
   };
 

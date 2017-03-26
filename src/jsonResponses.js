@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 
 const messages = {};
 
@@ -46,11 +47,36 @@ const respondJSONMeta = (request, response, status) => {
 
 // get user object
 // should calculate a 200 or 304 based on etag
-const getUsers = (request, response) => {
+const getMessages = (request, response, params) => {
   // json object to send
-  const responseJSON = {
-    messages,
-  };
+  const responseJSON = {}; // need to create json based off room
+
+  // If room is specified use it otherwise default to general
+  if (params.room) {
+    // get the timestamp data
+    if (messages) {
+      for (const time in messages) {
+        // get the userdata
+        if (time) {
+          for (const user in messages[time]) {
+            if (messages[time][user].room === params.room) {
+              responseJSON[time] = messages[time];
+            }
+          }
+        }
+      }
+    }
+  } else if (messages) {
+    // get the timestamp data
+    for (const time in messages) {
+          // get the userdata
+      for (const user in messages[time]) {
+        if (messages[time][user].room === 'general') {
+          responseJSON[time] = messages[time];
+        }
+      }
+    }
+  }
 
   if (request.headers['if-none-match'] === digest) {
     // return 304 response without message
@@ -65,7 +91,7 @@ const getUsers = (request, response) => {
 
 // get meta info about user object
 // should calculate a 200 or 304 based on etag
-const getUsersMeta = (request, response) => {
+const getMessagesMeta = (request, response) => {
   if (request.headers['if-none-match'] === digest) {
     return respondJSONMeta(request, response, 304);
   }
@@ -93,39 +119,34 @@ const notFoundMeta = (request, response) => {
 };
 
 // function to add a user from a POST body
-const addUser = (request, response, body) => {
+const addMsg = (request, response, body) => {
   // default json message
   const responseJSON = {
     name: '',
     msg: 'Name and message are both required.',
+    room: '',
   };
 
-  if (!body.name || !body.msg) {
+  // This should never happen but just in case
+  if (!body.username || !body.msg) {
     responseJSON.id = 'missingParams';
     return respondJSON(request, response, 400, responseJSON);
   }
 
   // default status code to 201 created
-  let responseCode = 201;
+  const responseCode = 201;
 
-  // if that user's name already exists in our object
-  // then switch to a 204 updated status
-  if (messages[body.timeStamp]) {
-    responseCode = 204;
-  } else {
-    // otherwise create an object with that name
+  // create a timestamp of the message if the object already doesn't exist
+  if (!messages[body.timeStamp]) {
     messages[body.timeStamp] = {};
   }
 
-  // add or update fields for this user name
-  messages[body.timeStamp].name = body.name;
+  const key = messages[body.timeStamp];
 
-  // check message for url
-  const url = getUrl(body.msg);
-  // add links if a url is in the message
-  const message = url ? addLink(body.msg, url) : body.msg;
-
-  messages[body.timeStamp].msg = message;
+  // add or update fields for this username
+  key[body.username] = {};
+  key[body.username].room = body.room;
+  key[body.username].msg = body.msg;
 
   // if response is created, then set our created message
   // and sent response with a message
@@ -136,8 +157,11 @@ const addUser = (request, response, body) => {
     // recalculating the hash digest for etag
     digest = etag.digest('hex');
 
-    responseJSON.name = messages[body.timeStamp].name;
-    responseJSON.msg = messages[body.timeStamp].msg;
+    // Cannot single out one object to handle multiple users / rooms at once
+    responseJSON.name = body.username;
+    responseJSON.msg = body.msg;
+    responseJSON.room = body.room;
+
     return respondJSON(request, response, responseCode, responseJSON);
   }
   // 204 has an empty payload, just a success
@@ -146,12 +170,38 @@ const addUser = (request, response, body) => {
   return respondJSONMeta(request, response, responseCode);
 };
 
-// http://stackoverflow.com/questions/26007187/node-js-check-if-a-remote-url-exists
+const urlIsValid = (url) => {
+  const handleResponse = (xhr) => {
+    if (xhr.status === 200) {
+      for (const time in messages) {
+      // loop through and look for the url
+        console.dir(messages);
+        for (const user in messages[time]) {
+          if (messages[time][user].msg.includes(url)) {
+            // check if youtube link to add embed code
+            if (url.includes('youtube')) {
+              const msgUrl = url.replace('watch?v=', 'embed/');
+
+              messages[time][user].msg += `<br><div class="aspect-ratio" id='ifr'><iframe src="${msgUrl}" allowfullscreen></iframe></div>`;
+            }
+          }
+        }
+      }
+    }
+  };
+  const xhr = new XMLHttpRequest();
+  xhr.open('HEAD', url);
+  xhr.onload = () => handleResponse(xhr);
+  xhr.send();
+};
 
 module.exports = {
-  addUser,
-  getUsers,
-  getUsersMeta,
+  urlIsValid,
+  getUrl,
+  addLink,
+  addMsg,
+  getMessages,
+  getMessagesMeta,
   notFound,
   notFoundMeta,
 };
